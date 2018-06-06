@@ -15,7 +15,9 @@ def print_progress(value, end_value, bar_length=20):
     arrow = '-' * int(round(percent * bar_length) - 1) + '>'
     spaces = ' ' * (bar_length - len(arrow))
 
-    sys.stdout.write("\rProgress: [{0}] {1}%".format(arrow + spaces, int(round(percent * 100))))
+    sys.stdout.write("\rProgress: [{0}] {1}% ({2} / {3})".format(
+        arrow + spaces, int(round(percent * 100)),
+        value, end_value))
     sys.stdout.flush()
 
 
@@ -93,6 +95,8 @@ def main():
         sys.exit(1)
 
     api = vk_session.get_api()
+    l = None
+    p = None
 
     print('downloading {} albums'.format(queries.__len__()))
     for q in queries:
