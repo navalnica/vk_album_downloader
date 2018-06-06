@@ -98,7 +98,7 @@ def main():
     l = None
     p = None
 
-    print('downloading {} albums'.format(queries.__len__()))
+    print('number of albums to download: {}'.format(queries.__len__()))
     for q in queries:
         o = q['owner_id']
         a = q['album_id']
@@ -118,7 +118,8 @@ def main():
         if not os.path.exists(album_path):
             os.makedirs(album_path)
         else:
-            album_path += '.copy_{:%Y-%m-%d_%H-%M-%S}'.format(datetime.datetime.now())
+            album_path += '.copy_{:%Y-%m-%d_%H-%M-%S}'.format(
+                datetime.datetime.now())
             os.makedirs(album_path)
 
         print('downloading album: ' + title)
@@ -126,13 +127,18 @@ def main():
         for p in photos:
             largest_image_width = p['sizes'][0]['width']
             largest_image_src = p['sizes'][0]['src']
-            for size in p['sizes']:
-                if size['width'] > largest_image_width:
-                    largest_image_width = size['width']
-                    largest_image_src = size['src']
+
+            if largest_image_width == 0:
+                largest_image_src = p['sizes'][p['sizes'].__len__() - 1]['src']
+            else:
+                for size in p['sizes']:
+                    if size['width'] > largest_image_width:
+                        largest_image_width = size['width']
+                        largest_image_src = size['src']
 
             extension = re.findall(r'\.[\w\d.-]+$', largest_image_src)[0]
-            download_image(largest_image_src, album_path + '/' + str(p['id']) + extension)
+            download_image(largest_image_src, album_path + '/' +
+                           str(p['id']) + extension)
             cnt += 1
             print_progress(cnt, images_num)
         print()
