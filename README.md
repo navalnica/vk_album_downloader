@@ -1,5 +1,5 @@
 # vk_album_downloader
-Python script to download list of albums (including albums from private communities) from [vk.com](vk.com). Implemented with VK API
+Python script to download list of albums (including albums from private communities) from [vk.com](https://www.vk.com). Implemented with VK API
 
 ## Installation ##
 In order to use this script you need to install [Python 3](https://www.python.org/downloads/).
