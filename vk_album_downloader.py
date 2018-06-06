@@ -5,12 +5,9 @@ import re
 import datetime
 import sys
 
-
-path_to_albums = 'd:/vk_downloaded_albums'
-
-
-#   TODO
-#   add only link to the album in data file
+path_to_downloaded_albums = 'vk_downloaded_albums'
+path_to_user_data = 'data.txt'
+path_to_albums_list = 'albums_list.txt'
 
 
 def print_progress(value, end_value, bar_length=20):
@@ -22,15 +19,44 @@ def print_progress(value, end_value, bar_length=20):
     sys.stdout.flush()
 
 
+def process_url(url):
+    verification = re.compile(r'^https://vk.com/album(-?[\d]+)_([\d]+)$')
+    o = verification.match(url)
+    if not o:
+        raise ValueError('invalid album link: {}'.format(url))
+    owner_id = o.group(1)
+    album_id = o.group(2)
+    return {'owner_id': owner_id, 'album_id': album_id}
+
+
 def read_data():
-    with open('d:/data.txt', 'r') as f:
-        lines = [line.strip() for line in f if line.strip()]
+    lines = []
+    try:
+        with open(path_to_user_data, 'r') as f:
+            lines = [line.strip() for line in f if line.strip()]
+    except FileNotFoundError as e:
+        print(e)
+        print('please, fix the file name either in the folder or in the script')
+        sys.exit(e.errno)
+
     l = lines[0]
     p = lines[1]
-    num = int(lines[2])
+
     queries = []
-    for x in range(num):
-        queries.append({'owner_id': lines[3 + 2 * x], 'album_id': lines[3 + 2 * x + 1]})
+    try:
+        with open(path_to_albums_list, 'r') as f:
+            lines = [line.strip() for line in f if line.strip()]
+    except FileNotFoundError as e:
+        print(e)
+        print('please, fix the file name either in the folder or in the script')
+        sys.exit(e.errno)
+
+    queries = []
+    for url in lines:
+        try:
+            queries.append(process_url(url))
+        except ValueError as e:
+            print(e)
     return l, p, queries
 
 
@@ -57,25 +83,34 @@ def fix_illegal_album_title(title):
 def main():
     l, p, queries = read_data()
     vk_session = vk_api.VkApi(l, p)
-    vk_session.auth()
+
+    try:
+        vk_session.auth()
+    except Exception as e:
+        print('could not authenticate to vk.com')
+        print(e)
+        print('please, check your user data in the file')
+        sys.exit(1)
+
     api = vk_session.get_api()
 
+    print('downloading {} albums'.format(queries.__len__()))
     for q in queries:
-        g = q['owner_id']
+        o = q['owner_id']
         a = q['album_id']
 
         try:
-            album = api.photos.getAlbums(owner_id='-' + g, album_ids=a)['items'][0]
+            album = api.photos.getAlbums(owner_id=o, album_ids=a)['items'][0]
             title = album['title']
             title = fix_illegal_album_title(title)
             images_num = album['size']
-            photos = api.photos.get(owner_id='-' + g, album_id=a, photo_sizes=1)['items']
+            photos = api.photos.get(owner_id=o, album_id=a, photo_sizes=1)['items']
         except vk_api.exceptions.ApiError as e:
             print('exception:')
             print(e)
             return
 
-        album_path = path_to_albums + '/' + title
+        album_path = path_to_downloaded_albums + '/' + title
         if not os.path.exists(album_path):
             os.makedirs(album_path)
         else:
@@ -85,18 +120,18 @@ def main():
         print('downloading album: ' + title)
         cnt = 0
         for p in photos:
-            biggest = p['sizes'][0]['width']
-            biggest_src = p['sizes'][0]['src']
+            largest_image_width = p['sizes'][0]['width']
+            largest_image_src = p['sizes'][0]['src']
             for size in p['sizes']:
-                if size['width'] > biggest:
-                    biggest = size['width']
-                    biggest_src = size['src']
+                if size['width'] > largest_image_width:
+                    largest_image_width = size['width']
+                    largest_image_src = size['src']
 
-            extension = re.findall(r'\.[\w\d.-]+$', biggest_src)[0]
-            download_image(biggest_src, album_path + '/' + str(p['id']) + extension)
+            extension = re.findall(r'\.[\w\d.-]+$', largest_image_src)[0]
+            download_image(largest_image_src, album_path + '/' + str(p['id']) + extension)
             cnt += 1
             print_progress(cnt, images_num)
-        print('')
+        print()
 
 
 if __name__ == "__main__":
