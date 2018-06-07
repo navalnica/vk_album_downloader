@@ -41,6 +41,10 @@ def read_data():
         print('please, fix the file name either in the folder or in the script')
         sys.exit(e.errno)
 
+    if (lines.__len__() < 2):
+    	print('unable to read login / phone number and password')
+    	print('please, check your user data in the file')
+    	sys.exit(1)
     l = lines[0]
     p = lines[1]
 
