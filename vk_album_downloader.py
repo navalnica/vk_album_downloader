@@ -130,15 +130,15 @@ def main():
         cnt = 0
         for p in photos:
             largest_image_width = p['sizes'][0]['width']
-            largest_image_src = p['sizes'][0]['src']
+            largest_image_src = p['sizes'][0]['url']
 
             if largest_image_width == 0:
-                largest_image_src = p['sizes'][p['sizes'].__len__() - 1]['src']
+                largest_image_src = p['sizes'][p['sizes'].__len__() - 1]['url']
             else:
                 for size in p['sizes']:
                     if size['width'] > largest_image_width:
                         largest_image_width = size['width']
-                        largest_image_src = size['src']
+                        largest_image_src = size['url']
 
             extension = re.findall(r'\.[\w\d.-]+$', largest_image_src)[0]
             download_image(largest_image_src, album_path + '/' +
