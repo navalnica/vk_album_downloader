@@ -140,7 +140,8 @@ def main():
                         largest_image_width = size['width']
                         largest_image_src = size['url']
 
-            extension = re.findall(r'\.[\w\d.-]+$', largest_image_src)[0]
+            extension = ("."+largest_image_src.split(".")[-1] 
+                         if "." in largest_image_src else "jpg")
             download_image(largest_image_src, album_path + '/' +
                            str(p['id']) + extension)
             cnt += 1
