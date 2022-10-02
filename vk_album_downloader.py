@@ -116,7 +116,7 @@ def main():
             title = album['title']
             title = fix_illegal_album_title(title)
             images_num = album['size']
-            photos = api.photos.get(owner_id=o, album_id=a, photo_sizes=1)['items']
+            photos = api.photos.get(owner_id=o, album_id=a, photo_sizes=1, count=images_num)['items']
         except vk_api.exceptions.ApiError as e:
             print('exception:')
             print(e)
