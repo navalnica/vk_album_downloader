@@ -6,7 +6,7 @@ import datetime
 import sys
 
 def handler_captcha(captcha):
-    key = input("Enter captcha code {0}: ".format(captcha.get_url())).strip()
+    key = input(f'Enter captcha code {captcha.get_url()}: ').strip()
     return captcha.try_again(key)
 
 path_to_downloaded_albums = 'vk_downloaded_albums'
