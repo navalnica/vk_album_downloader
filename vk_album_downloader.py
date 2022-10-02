@@ -5,6 +5,10 @@ import re
 import datetime
 import sys
 
+def handler_captcha(captcha):
+    key = input(f'Enter captcha code {captcha.get_url()}: ').strip()
+    return captcha.try_again(key)
+
 path_to_downloaded_albums = 'vk_downloaded_albums'
 path_to_user_data = 'data.txt'
 path_to_albums_list = 'albums_list.txt'
@@ -88,7 +92,7 @@ def fix_illegal_album_title(title):
 
 def main():
     l, p, queries = read_data()
-    vk_session = vk_api.VkApi(l, p)
+    vk_session = vk_api.VkApi(l, p, captcha_handler=handler_captcha)
 
     try:
         vk_session.auth()
