@@ -9,6 +9,12 @@ def handler_captcha(captcha):
     key = input(f'Enter captcha code {captcha.get_url()}: ').strip()
     return captcha.try_again(key)
 
+
+def handler_2fa():
+    code = input(f'Enter 2fa code: ').strip()
+    return code, False
+
+
 path_to_downloaded_albums = 'vk_downloaded_albums'
 path_to_user_data = 'data.txt'
 path_to_albums_list = 'albums_list.txt'
@@ -46,9 +52,9 @@ def read_data():
         sys.exit(e.errno)
 
     if (lines.__len__() < 2):
-    	print('unable to read login / phone number and password')
-    	print('please, check your user data in the file')
-    	sys.exit(1)
+        print('unable to read login / phone number and password') 
+        print('please, check your user data in the file') 
+        sys.exit(1)
     l = lines[0]
     p = lines[1]
 
@@ -92,7 +98,7 @@ def fix_illegal_album_title(title):
 
 def main():
     l, p, queries = read_data()
-    vk_session = vk_api.VkApi(l, p, captcha_handler=handler_captcha)
+    vk_session = vk_api.VkApi(l, p, captcha_handler=handler_captcha, auth_handler=handler_2fa)
 
     try:
         vk_session.auth()
@@ -113,24 +119,22 @@ def main():
 
         try:
             album = api.photos.getAlbums(owner_id=o, album_ids=a)['items'][0]
-            title = album['title']
-            title = fix_illegal_album_title(title)
             images_num = album['size']
-            photos = api.photos.get(owner_id=o, album_id=a, photo_sizes=1, count=images_num)['items']
+
+            photos = []
+
+            for i in range(1 + images_num // 1000):
+                photos += api.photos.get(owner_id=o, album_id=a, photo_sizes=1, count=min(images_num - i*1000, 1000), offset=i*1000)['items']
         except vk_api.exceptions.ApiError as e:
             print('exception:')
             print(e)
-            return
+            return    
 
-        album_path = path_to_downloaded_albums + '/' + title
+        album_path = os.path.join(path_to_downloaded_albums, a)
         if not os.path.exists(album_path):
             os.makedirs(album_path)
-        else:
-            album_path += '.copy_{:%Y-%m-%d_%H-%M-%S}'.format(
-                datetime.datetime.now())
-            os.makedirs(album_path)
 
-        print('downloading album: ' + title)
+        print('downloading album: ' + a)
         cnt = 0
         for p in photos:
             largest_image_width = p['sizes'][0]['width']
@@ -144,9 +148,8 @@ def main():
                         largest_image_width = size['width']
                         largest_image_src = size['url']
 
-            extension = os.path.splitext(largest_image_src)[-1]
-            download_image(largest_image_src, album_path + '/' +
-                           str(p['id']) + extension)
+            extension = os.path.splitext(largest_image_src)[-1].split('?')[0]
+            download_image(largest_image_src, os.path.join(album_path, str(p['id']) + extension))
             cnt += 1
             print_progress(cnt, images_num)
         print()
