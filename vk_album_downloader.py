@@ -88,12 +88,10 @@ def download_image(url, local_file_name):
             file.write(chunk)
     return
 
+PAT_ILLEGAL_CHARS = re.compile(r'[/|:?<>*"\\]')
 
-def fix_illegal_album_title(title):
-    illegal_character = '\/|:?<>*"'
-    for c in illegal_character:
-        title = title.replace(c, '_')
-    return title
+def fix_illegal_album_title(title: str) -> str:
+    return PAT_ILLEGAL_CHARS.sub('_', title)
 
 
 def main():
